@@ -6,6 +6,9 @@ import shutil
 # from mapping_simple import mapping_alg
 from mapping import mapping_alg
 
+sub_src_is_archive = False
+temp_path = os.path.join(os.getcwd(), 'temp')
+
 def get_videos(src_dir):
     video_files = []
     for f in os.listdir(src_dir):
@@ -15,8 +18,31 @@ def get_videos(src_dir):
             video_files.append(f)
     return video_files
 
+def extract_archive(archive_path, destination_dir):
+    import zipfile
+    import tarfile
+    if zipfile.is_zipfile(archive_path):
+        with zipfile.ZipFile(archive_path, 'r') as zip_ref:
+            zip_ref.extractall(destination_dir)
+    elif tarfile.is_tarfile(archive_path):
+        with tarfile.open(archive_path, 'r') as tar_ref:
+            tar_ref.extractall(destination_dir)
+    else:
+        logging.error(f"Extract {archive_path} failed. Unsupported file type.")
+
 def get_subs(src):
-    # TODO: if src is zip file, unzip it
+    # if src is archive file, unzip it
+    if os.path.isfile(src):
+        # make temp dir
+        os.makedirs(temp_path, exist_ok=True)
+        extract_archive(src, temp_path)
+        files = os.listdir(temp_path)
+        if len(files)==1:
+            sub_src = os.path.join(temp_path, files[0])
+        args.sub_src = src = sub_src
+        global sub_src_is_archive
+        sub_src_is_archive = True
+    
     sub_files = []
     for f in os.listdir(src):
         ext = os.path.splitext(f)[1]
@@ -55,7 +81,7 @@ def rename(mapping_data):
         video_filename = os.path.splitext(video_file)[0]
         sub_file_ext = os.path.splitext(sub_file)[1]
         new_sub_file = f"{video_filename}{sub_file_ext}"
-        print(f"Copy {sub_file} to {new_sub_file}")
+        print(f"{'Dryrun: ' if args.dry_run else ''} Copy {sub_file} to {new_sub_file}")
         if not args.dry_run:
             shutil.copy(os.path.join(args.sub_src, sub_file), os.path.join(args.video_src, new_sub_file))
 
@@ -88,8 +114,6 @@ if __name__ == "__main__":
         with open(mapping_json, 'w', encoding='utf-8') as f:
             json.dump(mapping_data, f, indent=4, ensure_ascii=False)
 
-    if args.dry_run:
-        print("Dry run, exit")
-        exit(0)
-
     rename(mapping_data)
+    if sub_src_is_archive:
+        shutil.rmtree(temp_path)
