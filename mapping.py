@@ -50,12 +50,10 @@ def filter_invalid_ep(ep2files, k=2):
         if ep < start_ep or ep > end_ep:
             ep2files.pop(ep)
             invalid_ep.append(ep)
-    logging.debug("Invalid eps:", invalid_ep)
+    logging.debug(f"Invalid eps: {invalid_ep}")
     return ep2files
 
-    # for each ep, we find the corresponding files.
 def get_ep2files(file2eps):
-    # we than keep track of each ep and the corresponding files.
     ep2files = {}
     for file, eps in file2eps.items():
         for ep in eps:

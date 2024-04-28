@@ -7,9 +7,6 @@ import shutil
 # from mapping_simple import mapping_alg
 from mapping import mapping_alg
 
-sub_src_is_archive = False
-temp_path = os.path.join(os.getcwd(), 'temp')
-
 def get_videos(src_dir):
     video_files = []
     for f in os.listdir(src_dir):
@@ -32,18 +29,6 @@ def extract_archive(archive_path, destination_dir):
         logging.error(f"Extract {archive_path} failed. Unsupported file type.")
 
 def get_subs(src):
-    # if src is archive file, unzip it
-    if os.path.isfile(src):
-        # make temp dir
-        os.makedirs(temp_path, exist_ok=True)
-        extract_archive(src, temp_path)
-        files = os.listdir(temp_path)
-        if len(files)==1:
-            sub_src = os.path.join(temp_path, files[0])
-        args.sub_src = src = sub_src
-        global sub_src_is_archive
-        sub_src_is_archive = True
-    
     sub_files = []
     for f in os.listdir(src):
         ext = os.path.splitext(f)[1]
@@ -78,6 +63,9 @@ def rename(mapping_data):
         if ep==-1:
             logging.error(f"sub miss ep {sub_file}")
             continue
+        if ep not in ep2video:
+            logging.error(f'ep {ep} match no file, {sub_file}')
+            continue
         video_file = ep2video[ep]
         video_filename = os.path.splitext(video_file)[0]
         # get subtitle file language & ext
@@ -90,7 +78,7 @@ def rename(mapping_data):
             sub_ext = os.path.splitext(sub_file)[1]
         new_sub_file = f"{video_filename}{sub_lang}{sub_ext}"
         
-        logging.info(f"{'Dryrun: ' if args.dry_run else ''} Copy {sub_file} to {new_sub_file}")
+        logging.info(f"{'Dryrun, ' if args.dry_run else ''}Copy {sub_file} to {new_sub_file}")
         if not args.dry_run:
             shutil.copy(os.path.join(args.sub_src, sub_file), os.path.join(args.video_src, new_sub_file))
 
@@ -101,15 +89,34 @@ if __name__ == "__main__":
                         help='Path to the video directory')
     parser.add_argument('--sub-src',
                         required=True,
-                        help='Path to the sub directory, or zip file (todo)')
+                        help='Path to the sub directory, or zip,tar file')
     parser.add_argument('-u', '--update',
                         action="store_true",
                         help='read json file and rename sub')
     parser.add_argument('-n', '--dry_run',
                         action="store_true",
                         help='Only generate json file')
+    parser.add_argument('-v', '--verbose',
+                        action="store_true",
+                        help='print debug log')
     args = parser.parse_args()
-
+    
+    logging.basicConfig(
+        format='[%(levelname)s]: %(message)s', 
+        level=logging.DEBUG if args.verbose else logging.INFO)
+    
+    # check if sub_src is archive file, unzip it
+    temp_path = os.path.join(os.getcwd(), 'temp')
+    sub_src_is_archive = False
+    if os.path.isfile(args.sub_src):
+        # make temp dir
+        os.makedirs(temp_path, exist_ok=True)
+        extract_archive(args.sub_src, temp_path)
+        files = os.listdir(temp_path)
+        if len(files)==1:
+            args.sub_src = os.path.join(temp_path, files[0])
+        sub_src_is_archive = True
+        
     mapping_json = 'mapping.json'
     if args.update:
         with open(mapping_json, encoding='utf-8') as f:
