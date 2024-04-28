@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import logging
+import re
 import shutil
 # from mapping_simple import mapping_alg
 from mapping import mapping_alg
@@ -79,9 +80,17 @@ def rename(mapping_data):
             continue
         video_file = ep2video[ep]
         video_filename = os.path.splitext(video_file)[0]
-        sub_file_ext = os.path.splitext(sub_file)[1]
-        new_sub_file = f"{video_filename}{sub_file_ext}"
-        print(f"{'Dryrun: ' if args.dry_run else ''} Copy {sub_file} to {new_sub_file}")
+        # get subtitle file language & ext
+        m = re.search(r'.*?(?P<lang>\.\w+)(?P<ext>\.\w+)', sub_file)
+        if m:
+            sub_lang = m.group('lang')
+            sub_ext = m.group('ext')
+        else:
+            sub_lang = ''
+            sub_ext = os.path.splitext(sub_file)[1]
+        new_sub_file = f"{video_filename}{sub_lang}{sub_ext}"
+        
+        logging.info(f"{'Dryrun: ' if args.dry_run else ''} Copy {sub_file} to {new_sub_file}")
         if not args.dry_run:
             shutil.copy(os.path.join(args.sub_src, sub_file), os.path.join(args.video_src, new_sub_file))
 
