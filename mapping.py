@@ -39,7 +39,7 @@ def find_longest_roughly_continuous_range(nums, k=2):
         i = j
     return start, end
 
-def filter_invalid_ep(ep2files, k=2):
+def filter_invalid_ep(ep2files, file2eps, k=2):
     invalid_ep = []
     # k is how many eps can be lose. 1 mean can't lose
     start_ep, end_ep = find_longest_roughly_continuous_range(list(ep2files.keys()), k=k)
@@ -48,7 +48,14 @@ def filter_invalid_ep(ep2files, k=2):
             ep2files.pop(ep)
             invalid_ep.append(ep)
     logging.debug(f"Invalid eps: {invalid_ep}")
-    return ep2files
+    # filter invalid eps in file2eps
+    for file, eps in file2eps.items():
+        eps_new = []
+        for ep in eps:
+            if ep not in invalid_ep:
+                eps_new.append(ep)
+        file2eps[file] = eps_new
+    return ep2files, file2eps
 
 def get_ep2files(file2eps):
     ep2files = {}
@@ -89,18 +96,35 @@ def get_file2ep(file_list):
     file2eps = {}
     for file in file_list:
         ep_list = get_possible_eps(file)
-        ep_set = set(ep_list)
-        file2eps[file] = ep_set
+        file2eps[file] = ep_list
     
     # for each ep, we find the corresponding files.
     ep2files = get_ep2files(file2eps)
     
     # filter invalid ep like random number, x264, 720p, etc
-    filter_invalid_ep(ep2files)
+    ep2files, file2eps = filter_invalid_ep(ep2files, file2eps)
     
-    # print_json(file2eps)
-    # print_json(ep2files)
+    common_eps = {}
+    # find common ep
+    for ep, files in ep2files.items():
+        if len(files) >= 2:
+            if ep not in common_eps:
+                common_eps[ep] = 0
+            common_eps[ep] += 1
+    common_eps_sorted = sorted(common_eps, key=lambda x: common_eps[x], reverse=True)
+    # remove common ep
+    for file, eps in file2eps.items():
+        eps_new = eps.copy()
+        for common_ep in common_eps_sorted:
+            if len(eps_new) <= 1:
+                break
+            if common_ep in eps_new:
+                eps_new.remove(common_ep)  # remove only first, so that it won't be empty
+        file2eps[file] = eps_new
     
+    # regenerate ep2files
+    ep2files = get_ep2files(file2eps)
+
     # Since the right episode numbers is a range [ep_start, ep_end]
     # There is always some ep corresponding to only one file.
     # Then we use these reference files to find other files have simliar names.
