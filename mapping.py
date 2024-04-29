@@ -128,7 +128,18 @@ def get_file2ep(file_list):
     return file2ep
 
 def mapping_alg(video_files, sub_files):
-    sub2ep = get_file2ep(sub_files)
+    # For multiple versions of subtitles(like language), we extract the episode number
+    # from the filename, and then use it to associate with the corresponding subtitle file.
+    sub_filenames = []
+    for sub_file in sub_files:
+        filename = sub_file.split(".")[0]
+        sub_filenames.append(filename)
+    sub2ep_ = get_file2ep(sub_filenames)
+    sub2ep = {}
+    for sub_file in sub_files:
+        filename = sub_file.split(".")[0]
+        sub2ep[sub_file] = sub2ep_[filename]
+    
     video2ep = get_file2ep(video_files)
     
     return sub2ep, video2ep

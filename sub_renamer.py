@@ -69,10 +69,11 @@ def rename(mapping_data):
         video_file = ep2video[ep]
         video_filename = os.path.splitext(video_file)[0]
         # get subtitle file language & ext
-        m = re.search(r'.*?(?P<lang>\.\w+)(?P<ext>\.\w+)', sub_file)
+        # use \S, because it can contain general version info, like `KissSub&FZSD-TC`
+        m = re.search(r'.*?(?P<lang>\.\S+)(?P<ext>\.\w+)', sub_file)
         if m:
-            sub_lang = m.group('lang')
-            sub_ext = m.group('ext')
+            sub_lang = m.group('lang').lower()
+            sub_ext = m.group('ext').lower()
         else:
             sub_lang = ''
             sub_ext = os.path.splitext(sub_file)[1]
