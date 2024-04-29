@@ -17,13 +17,10 @@ def get_set_first(s):
         return x
     
 def get_possible_eps(filename):
-    # S01E01, #01, 01
-    m = re.search(r'(\b|E|EP|#)(\d+)\b', filename, flags=re.A | re.I)
-    if m:
-        return [int(m.group(2))]
-    return []
-    # fallback to all digits
-    ep_list = re.findall(r'\d+\b', filename)
+    # get all possible ep number in filename
+    # ep_list = re.findall(r'(?:\b|E|EP|#)(\d+)\b', filename, flags=re.A | re.I)  # S01E01, #01, 01
+    # we use the most generic method
+    ep_list = re.findall(r'\d+', filename, flags=re.A | re.I)
     ep_list = [int(ep) for ep in ep_list]
     return ep_list
 
@@ -86,7 +83,7 @@ def get_max_score_file(files, ref_files):
         score_list.append(get_score(file, ref_files))
     max_idx = score_list.index(max(score_list))
     return files[max_idx]
-        
+
 def get_file2ep(file_list):
     # for each filename, we extract all possible ep.
     file2eps = {}
