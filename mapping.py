@@ -108,9 +108,7 @@ def get_file2ep(file_list):
     # find common ep
     for ep, files in ep2files.items():
         if len(files) >= 2:
-            if ep not in common_eps:
-                common_eps[ep] = 0
-            common_eps[ep] += 1
+            common_eps[ep] = len(files)
     common_eps_sorted = sorted(common_eps, key=lambda x: common_eps[x], reverse=True)
     # remove common ep
     for file, eps in file2eps.items():

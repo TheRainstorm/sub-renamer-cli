@@ -37,3 +37,12 @@ vim mapping.json
 # copy and rename subtitle file
 python sub_renamer.py --video-src '/mnt/Disk1/BT/Video/Anime/[ANK-Raws] 六花の勇者 (BDrip 1920x1080 HEVC-YUV420P10 FLAC)' --sub-src '/mnt/Disk1/[Beatrice-Raws] Rokka no Yuusha [Subs].zip' -u
 ```
+
+## Algorithm
+
+1. Extract all numbers from the filenames. This ensures that the true episode number is **not lost**.
+2. Identify the episode number range **(ep_start, ep_end)** based on the assumption that ep is usually continuous.
+3. Then filter out irrelevant numbers such as x265, 1080p, etc.
+4. Some numbers may be common across all filenames, such as season numbers or audio formats like 5.1ch/2ch. Get this list of common numbers and sort them by frequency. For each file, **exclude the common numbers** unless it is the only number left.
+5. Generate a mapping of episode numbers to all possible files. Certain episode numbers are exclusively **mapped to single files**, serving as reference files.
+6. For each episode number, select the most probable file by comparing its similarity to the reference files.
