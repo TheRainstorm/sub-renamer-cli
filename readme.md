@@ -40,9 +40,23 @@ python sub_renamer.py --video-src '/mnt/Disk1/BT/Video/Anime/[ANK-Raws] 六花�
 
 ## Algorithm
 
+`classic` is sophisticated and generic. `prefix` method is simple but incredible effective.
+
+### classic
+
 1. Extract all numbers from the filenames. This ensures that the true episode number is **not lost**.
 2. Identify the episode number range **(ep_start, ep_end)** based on the assumption that ep is usually continuous.
 3. Then filter out irrelevant numbers such as x265, 1080p, etc.
 4. Some numbers may be common across all filenames, such as season numbers or audio formats like 5.1ch/2ch. Get this list of common numbers and sort them by frequency. For each file, **exclude the common numbers** unless it is the only number left.
 5. Generate a mapping of episode numbers to all possible files. Certain episode numbers are exclusively **mapped to single files**, serving as reference files.
 6. For each episode number, select the most probable file by comparing its similarity to the reference files.
+
+drawback:
+
+- don't work when common numbers repeat in the filename
+
+### common prefix
+
+1. sort filename by alphabetical order
+2. find longest common prefix
+3. construct the regular expression to extract episode number (`{prefix}\d+`)

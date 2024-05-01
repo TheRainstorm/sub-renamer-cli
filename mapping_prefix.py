@@ -43,16 +43,20 @@ def get_file2ep_try_prefix(file_list):
         return False, {}
     file2ep = {}
     escaped_prefix = re.escape(prefix)
+    success = False
     for i in range(len(file_list)):
         if start <= i <= end:
             m = re.search(rf'{escaped_prefix}(\d+)', file_list[i], flags=re.A | re.I)
             if m:
                 file2ep[file_list[i]] = int(m.group(1))
+                success = True
             else:
                 file2ep[file_list[i]] = -1
         else:
             file2ep[file_list[i]] = -1
-    return True, file2ep
+    if success:
+        return True, file2ep
+    return False, {}
 
 def get_all_empty(file_list):
     file2ep = {}
