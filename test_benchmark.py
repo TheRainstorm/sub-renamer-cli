@@ -1,10 +1,9 @@
 import argparse
 import json
+import logging
 import os
 
 from sub_renamer import get_videos
-from mapping import get_file2ep
-from test_file2ep import get_ep2file
 
 def generate_benchmark(src):
     result_json = os.path.join("result.json")
@@ -42,7 +41,12 @@ def test_benchmark(src):
         tv_error_flag = False
         for video, ep in ref_result.items():
             episode_cnt += 1
-            if video2ep[video] != ep:
+            if type(ep)==list:
+                if video2ep[video] not in ep:
+                    tv_error_flag = True
+                    episode_error_cnt += 1
+                    print(f"Error Ref: {ep} Get:{video2ep[video]:3d} {video}")
+            elif video2ep[video] != ep:
                 tv_error_flag = True
                 episode_error_cnt += 1
                 print(f"Error Ref: {ep:3d} Get:{video2ep[video]:3d} {video}")
@@ -61,7 +65,29 @@ if __name__ == '__main__':
     parser.add_argument('-g', '--generate',
                         action='store_true',
                         help='generate benchmark json file')
+    parser.add_argument('-a', '--alg',
+                        type=int,
+                        default=2,
+                        help='select mapping alg, 0: classic, 1: prefix, 2: combined')
+    parser.add_argument('-v', '--verbose',
+                        action="store_true",
+                        help='print debug info')
     args = parser.parse_args()
+    
+    logging.basicConfig(
+        format='[%(levelname)s]: %(message)s', 
+        level=logging.DEBUG if args.verbose else logging.INFO)
+    
+    if args.alg==0:
+        from mapping import get_file2ep
+        print("Using classic mapping")
+    elif args.alg==1:
+        from mapping_prefix import get_file2ep
+        print("Using prefix mapping")
+    else:
+        print("Using combined mapping")
+        from mapping import get_file2ep_combined as get_file2ep
+    
     if args.generate:
         generate_benchmark(args.src)
     else:

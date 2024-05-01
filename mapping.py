@@ -3,14 +3,16 @@ import json
 import re
 import difflib
 import logging
+from mapping_prefix import get_file2ep_try_prefix
 
 cnt = 0
 def print_json(data):
     global cnt
     data_new = {k : list(v) for k, v in data.items()}
-    cnt += 1
+    data_new = {k: v for k, v in sorted(data_new.items(), key=lambda item: item[0])}
     with open(f'data-{cnt}.json', 'w', encoding='utf-8') as f:
         json.dump(data_new, f, indent=4, ensure_ascii=False)
+    cnt = (cnt + 1) % 2
 
 def get_set_first(s):
     for x in s:
@@ -104,6 +106,9 @@ def get_file2ep(file_list):
     # filter invalid ep like random number, x264, 720p, etc
     ep2files, file2eps = filter_invalid_ep(ep2files, file2eps)
     
+    # print_json(file2eps)
+    # print_json(ep2files)
+    
     common_eps = {}
     # find common ep
     for ep, files in ep2files.items():
@@ -122,6 +127,9 @@ def get_file2ep(file_list):
     
     # regenerate ep2files
     ep2files = get_ep2files(file2eps)
+    
+    # print_json(file2eps)
+    # print_json(ep2files)
 
     # Since the right episode numbers is a range [ep_start, ep_end]
     # There is always some ep corresponding to only one file.
@@ -146,6 +154,13 @@ def get_file2ep(file_list):
     
     return file2ep
 
+def get_file2ep_combined(file_list):
+    success, file2ep = get_file2ep_try_prefix(file_list)
+    if success:
+        return file2ep
+    logging.debug(f"Try prefix failed {file_list[:3]}")
+    return get_file2ep(file_list)
+
 def mapping_alg(video_files, sub_files):
     # For multiple versions of subtitles(like language), we extract the episode number
     # from the filename, and then use it to associate with the corresponding subtitle file.
@@ -153,12 +168,12 @@ def mapping_alg(video_files, sub_files):
     for sub_file in sub_files:
         filename = sub_file.split(".")[0]
         sub_filenames.append(filename)
-    sub2ep_ = get_file2ep(sub_filenames)
+    sub2ep_ = get_file2ep_combined(sub_filenames)
     sub2ep = {}
     for sub_file in sub_files:
         filename = sub_file.split(".")[0]
         sub2ep[sub_file] = sub2ep_[filename]
     
-    video2ep = get_file2ep(video_files)
+    video2ep = get_file2ep_combined(video_files)
     
     return sub2ep, video2ep

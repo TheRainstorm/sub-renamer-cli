@@ -99,7 +99,7 @@ if __name__ == "__main__":
                         help='Only generate json file')
     parser.add_argument('-v', '--verbose',
                         action="store_true",
-                        help='print debug log')
+                        help='print debug info')
     args = parser.parse_args()
     
     logging.basicConfig(
