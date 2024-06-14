@@ -116,6 +116,8 @@ if __name__ == "__main__":
         files = os.listdir(temp_path)
         if len(files)==1:
             args.sub_src = os.path.join(temp_path, files[0])
+        else:
+            args.sub_src = os.path.join(temp_path)
         sub_src_is_archive = True
         
     mapping_json = 'mapping.json'
